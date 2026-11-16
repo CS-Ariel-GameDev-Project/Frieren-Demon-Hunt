@@ -4,7 +4,7 @@ A 2D top-down combat prototype built in Unity. Play as Frieren and survive three
 
 **Repository:** https://github.com/CS-Ariel-GameDev-Project/Frieren-Demon-Hunt
 
-**Web version:** Not published yet.
+**Web version:** https://elonitai.itch.io/frieren-demon-hunt
 
 ## Running the game
 
