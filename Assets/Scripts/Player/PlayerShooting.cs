@@ -18,6 +18,8 @@ public class PlayerShooting : MonoBehaviour
 
     private float nextShotTime;
 
+    private const float MinimumAimSqrDistance = 0.001f;
+
     private void Awake()
     {
         if (aimCamera == null)
@@ -56,7 +58,7 @@ public class PlayerShooting : MonoBehaviour
         Vector2 direction = targetPosition - playerPosition;
 
         // Avoid normalizing a near-zero direction when aiming at the player.
-        if (direction.sqrMagnitude < 0.001f)
+        if (direction.sqrMagnitude < MinimumAimSqrDistance)
             return;
 
         direction.Normalize();
