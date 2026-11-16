@@ -1,127 +1,172 @@
-<div align="center">
+# Frieren: Demon Hunt
 
-# ✨ FRIEREN: DEMON HUNT
+A 2D top-down combat prototype built in Unity. Play as Frieren and survive three waves of melee demons in a forest arena.
 
-### Three heroes. Three fighting styles. One journey against the demons.
+**Repository:** https://github.com/CS-Ariel-GameDev-Project/Frieren-Demon-Hunt
 
-**A mission-based, top-down 2D action RPG inspired by *Frieren: Beyond Journey’s End*.**
+**Web version:** Not published yet.
 
-![Project Status](https://img.shields.io/badge/status-concept%20%2F%20academic%20project-52648c?style=for-the-badge)
-![Engine](https://img.shields.io/badge/engine-Unity-222222?style=for-the-badge)
-![Platform](https://img.shields.io/badge/platform-Windows-466ca4?style=for-the-badge)
-![Players](https://img.shields.io/badge/players-single--player-627d69?style=for-the-badge)
+## Running the game
 
-<!-- An original anime promotional visual is loaded from an external website; it is NOT AI-generated. -->
-<img src="https://static.zerochan.net/Sousou.no.Frieren.full.4266441.jpg" width="740" alt="Frieren, Fern and Stark in an anime promotional visual">
+1. Open the project using Unity **6000.3.25f1**.
+2. Wait for Unity to restore the project packages.
+3. Open `Assets/Scenes/Stage1_Forest.unity`.
+4. Press Play, then click Start.
 
-<sub>Original anime promotional artwork of Frieren, Fern, and Stark — source: <a href="https://frieren-anime.jp/news/232/">Frieren anime official announcement</a>; remotely hosted image via <a href="https://www.zerochan.net/4266441">Zerochan</a>. Rights belong to the original copyright holders.</sub>
+## Controls and objective
 
-</div>
+| Input | Action |
+|---|---|
+| WASD or arrow keys | Move |
+| Mouse | Aim |
+| Hold left mouse button | Shoot |
+| Start | Begin playing |
+| Play Again | Reset the scene and return to the opening screen |
 
----
+The player starts with 3 HP and receives one second of invulnerability after taking damage.
 
-## 🌙 The Adventure
+Clear three waves containing 3, 5, and 7 enemies to win. Reaching zero HP causes defeat. The next wave begins after all enemies and their death effects have disappeared.
 
-The tavern's quest board is filling up with requests to hunt demons, and three adventurers are ready to answer the call.
+Trees, rocks, and arena borders block movement. Projectiles hit enemies and obstacles but ignore arena borders. Defeated enemies spin and fly backward before disappearing.
 
-In **Frieren: Demon Hunt**, choose **Frieren**, **Fern**, or **Stark** before each mission and take on short, action-packed battles in distinct arenas. Master your character's fighting style, evade incoming attacks, unleash a special ability with a well-timed **quick-time event (QTE)**, and bring your rewards back to the tavern to become stronger.
+## Code organization
 
-> **Design idea:** Keep exploration lightweight and the combat meaningful. Each mission should get players into the action quickly, with tougher enemies and a challenging boss awaiting them.
+| Folder | Components |
+|---|---|
+| `Assets/Scripts/Player` | `PlayerMovement`, `PlayerShooting`, `PlayerHealth` |
+| `Assets/Scripts/Combat` | `MagicProjectile`, `Health` |
+| `Assets/Scripts/Enemies` | `EnemyChase`, `EnemyMeleeAttack`, `EnemyDeathEffect` |
+| `Assets/Scripts/Stage` | `WaveSpawner` |
+| `Assets/Scripts/UI` | `GameHUD`, `GameScreens` |
 
-<div align="center">
-<img src="images/01_title_screen.png" width="47%" alt="AI-generated concept mockup of the title screen"> <img src="images/02_tavern_quest_board.png" width="47%" alt="AI-generated concept mockup of the quest selection tavern">
-</div>
+Prefabs are stored under `Assets/Prefabs`, sprites under `Assets/Art`, and scenes under `Assets/Scenes`.
 
-## ⚔️ Choose Your Hero
+## Current class relationships
 
-| Character | Combat identity | Strength | Trade-off |
-|:--|:--|:--|:--|
-| **Frieren** | Heavy-hitting mage | Powerful, slower spells and area damage | More deliberate attack timing |
-| **Fern** | Rapid-fire mage | Fast, sustained magical attacks and mobility | Lower impact per individual hit |
-| **Stark** | Frontline axe fighter | Close-range damage and durability | Must approach enemies to attack |
+Each component has a focused responsibility:
 
-<div align="center">
-<img src="images/03_character_select.png" width="76%" alt="AI-generated character selection mockup showing Frieren, Fern and Stark">
-</div>
+- `PlayerMovement` reads keyboard input and applies physics movement.
+- `PlayerShooting` aims and creates projectiles.
+- `PlayerHealth` manages player HP, immunity, and death.
+- `MagicProjectile` handles projectile movement and impacts.
+- `Health` manages enemy HP.
+- `EnemyChase` moves directly toward the player.
+- `EnemyMeleeAttack` attempts close-range damage at timed intervals.
+- `EnemyDeathEffect` handles death spin, knockback, and removal.
+- `WaveSpawner` creates enemies and advances waves.
+- `GameHUD` displays health and wave progress.
+- `GameScreens` displays opening and result panels.
 
-**One mission, one hero:** select your character before entering the arena. Switching characters mid-combat is a possible future feature, but is **not planned for the initial demo**.
+The following diagram shows direct component calls and dependencies:
 
-## 🔁 Gameplay Loop
+```mermaid
+classDiagram
+    direction TB
+    WaveSpawner --> EnemyChase : assigns target
+    WaveSpawner --> EnemyMeleeAttack : assigns target
+    PlayerShooting --> MagicProjectile : creates and launches
+    MagicProjectile --> Health : TakeDamage
+    Health --> EnemyDeathEffect : Play
+    EnemyDeathEffect --> EnemyChase : disables
+    EnemyDeathEffect --> EnemyMeleeAttack : disables
+    EnemyMeleeAttack --> PlayerHealth : TakeDamage
+    PlayerHealth --> PlayerMovement : disables on death
+    PlayerHealth --> PlayerShooting : disables on death
+```
 
-<div align="center">
+## Events and UI communication
 
-**📜 Accept a Quest → 🧙 Choose a Hero → ⚔️ Fight Demons → 🏆 Claim Rewards → 📈 Upgrade → 🍻 Return to the Tavern**
+Gameplay components publish events without holding references to UI components.
 
-</div>
+```mermaid
+classDiagram
+    direction TB
+    PlayerHealth ..> GameHUD : HealthChanged
+    PlayerHealth ..> GameScreens : Died
+    WaveSpawner ..> GameHUD : WaveChanged
+    WaveSpawner ..> GameScreens : Won
+```
 
-- **Accept quests** from a compact tavern hub, with difficulty and rewards presented before starting.
-- **Fight in real time** using movement, aiming, regular attacks, dodges, and character-specific abilities.
-- **Time special attacks** using short QTE sequences to earn an attack bonus.
-- **Grow stronger** by investing earned rewards in character statistics such as HP, damage, movement speed, and mana or stamina capacity.
-- **Replay missions** with another hero for a different combat experience.
+| Publisher | Event | Subscriber |
+|---|---|---|
+| `PlayerHealth` | `HealthChanged(current, maximum)` | `GameHUD` updates HP |
+| `PlayerHealth` | `Died()` | `GameScreens` displays defeat |
+| `WaveSpawner` | `WaveChanged(current, total)` | `GameHUD` updates wave progress |
+| `WaveSpawner` | `Won()` | `GameScreens` displays victory |
 
-## 🗺️ Three Missions, One Demo
+Listeners subscribe in `OnEnable` and unsubscribe in `OnDisable`. The HUD also reads current values when activated to display the initial state and recover updates missed while disabled.
 
-| Stage | Goal | Challenge |
-|:--|:--|:--|
-| **01 · Forest Cleanup** | Clear groups of low-level demons | Learn the basics and handle enemy waves |
-| **02 · Abandoned Village** | Defeat tougher mixed enemy groups | Balance positioning and pressure from different enemy types |
-| **03 · Boss Encounter** | Defeat a powerful demon | Recognize telegraphed attack patterns and dodge at the right moment |
+`GameScreens` pauses scaled time and disables player controls while menus are open. Play Again reloads the current scene.
 
-<div align="center">
-<img src="images/05_forest_enemy_wave.png" width="31%" alt="AI-generated forest encounter"> <img src="images/06_abandoned_village.png" width="31%" alt="AI-generated abandoned village encounter"> <img src="images/07_boss_battle.png" width="31%" alt="AI-generated boss encounter">
-</div>
+## Architecture decisions
 
-## ✨ The Combat Twist: Special-Attack QTEs
+### 1. Composition and focused components
 
-Special moves offer a brief timing challenge: hit the indicated keys in sequence to improve the attack's effectiveness. Missing the QTE does not necessarily cancel the entire move, keeping the pace approachable while rewarding precision.
+Movement, attacks, health, spawning, and presentation are separate components rather than one general game manager or a deep inheritance hierarchy.
 
-<div align="center">
-<img src="images/08_special_ability_qte.png" width="68%" alt="AI-generated QTE concept mockup">
-</div>
+This allows individual behaviors to be adjusted independently. For example, changing melee attack timing does not require editing movement or UI code.
 
-### Planned PC Controls
+### 2. Events between gameplay and UI
 
-| Action | Input |
-|:--|:--|
-| Move | `W` `A` `S` `D` |
-| Aim | Mouse |
-| Normal attack | Left mouse button |
-| Special ability | `Q` |
-| Dodge | `Space` |
-| QTE | On-screen indicated keys |
+An alternative was to open panels and update labels directly from gameplay scripts.
 
-<sub>Controls are proposals and may change during prototyping and playtesting.</sub>
+Events were chosen so gameplay reports what happened while UI components decide how to display it. Direct calls remain for local interactions such as applying damage.
 
-## 🪙 Progression & Rewards
+### 3. Inspector configuration
 
-After each successful mission, receive rewards and improve the hero you played. Upgrades are intended to create meaningful choices without requiring a large equipment or inventory system.
+Health, speed, cooldowns, attack range, knockback, wave sizes, and spawn timing are serialized fields. Spawn positions are scene transforms.
 
-<div align="center">
-<img src="images/09_mission_complete.png" width="47%" alt="AI-generated mission results mockup"> <img src="images/10_character_upgrades.png" width="47%" alt="AI-generated upgrade screen mockup">
-</div>
+This allows balancing without editing code. ScriptableObjects could be introduced if multiple stages need shared configurations.
 
-## 🛠️ Development Scope
+The custom gameplay scripts use no singleton instances or custom static fields. Unity's global `Time.timeScale` is used to pause menus and is restored on restart and when `GameScreens` is destroyed.
 
-**Target demo:** three selectable characters, a quest-board tavern, two standard combat missions, one boss mission, basic enemies, special-ability QTEs, and a lightweight character upgrade system.
+## Adding an enemy type
 
-**Potential future additions:** mid-battle character swapping, more abilities and arenas, explorable areas, cosmetic outfits, expanded equipment, and additional bosses. These are ideas for expansion, **not current demo commitments**.
+### Another melee variant
 
-> 🚧 **Development status:** Early game design / academic concept. The artwork below and throughout this README illustrates the intended player experience; it is **not gameplay captured from a working build**.
+1. Duplicate `Assets/Prefabs/Enemies/Demon_Melee.prefab`.
+2. Change its sprite and Inspector values.
+3. Keep `EnemyChase` and `EnemyMeleeAttack`, because the spawner assigns their targets directly.
+4. Assign the new prefab to `WaveSpawner.enemyPrefab`.
 
-## 📖 Design Documentation
+Replacing the current enemy with a compatible melee variant requires no script changes.
 
-For the complete specification — including players, objectives, procedures, rules, resources, conflicts, boundaries, outcomes, and comparable games — see **[GAME_DESIGN.md](GAME_DESIGN.md)**.
+### A different attack behavior
 
-## 🎨 Artwork, Credits & Disclaimer
+Add a new attack component, then update:
 
-- **Game concept and design:** academic student project inspired by the world and characters of *Frieren: Beyond Journey's End*.
-- **Pixel-art game screenshots:** AI-generated concept mockups created to visualize the planned interface and gameplay. They are **not actual in-engine screenshots**.
-- **Original anime visual at the top:** existing promotional artwork, **not AI-generated**, sourced and credited beneath the image.
-- **Intellectual property:** *Frieren: Beyond Journey's End* and its characters belong to their respective rights holders. This is an **unofficial, non-commercial student concept**, not an official licensed game; any public release or commercial use would need appropriate rights and permissions.
+- `WaveSpawner` to assign its target.
+- `EnemyDeathEffect` to disable the new attack when the enemy dies.
 
-<div align="center">
+Mixed enemy types require extending the spawner's current single-prefab configuration. A hostile projectile must damage `PlayerHealth`; the existing `MagicProjectile` damages `Health` only.
 
-*The journey continues — one quest at a time.*
+## Physics
 
-</div>
+- `Rigidbody2D` velocity drives player, enemy, and projectile movement.
+- `OnCollisionEnter2D` uses collision information to resolve projectile hits.
+- `AddForce` and `AddTorque` provide death knockback and spin.
+- `Physics2D.IgnoreCollision` prevents projectiles from hitting their owner.
+
+`Plane.Raycast` performs a geometric aiming calculation. It is not a physics raycast against scene colliders. This prototype does not implement `CharacterController` or collider-based `Raycast/SphereCast`.
+
+## Current scope
+
+The prototype contains one forest arena and one melee enemy type. Enemies pursue directly and can be blocked by obstacles; they do not calculate paths around them.
+
+Ranged enemies and dodging are outside this version's scope.
+
+## Architecture review
+
+See [Architecture Review](docs/Architecture_Review.md) for a reference design and its differences from the current implementation.
+
+The reference design was prepared retrospectively and is not presented as a diagram created before implementation.
+
+## Web build
+
+Build the project for Web with `Assets/Scenes/Stage1_Forest.unity` included in the active scene list.
+
+Upload the complete Web build to Itch.io as an HTML game. After publishing:
+
+- Replace the pending Web version status above with the playable link.
+- Add controls and playing instructions to the Itch.io page.
+- Link from the Itch.io page back to this repository.
