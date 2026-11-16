@@ -8,6 +8,8 @@ public class PlayerHealth : MonoBehaviour
 {
     [SerializeField, Min(1)] private int maxHealth = 3;
     [SerializeField, Min(0f)] private float invulnerabilityDuration = 1f;
+    [SerializeField, Min(0.1f)] private float blinkRate = 12f;
+    [SerializeField, Range(0f, 1f)] private float blinkOpacityMultiplier = 0.3f;
 
     private int currentHealth;
     private float invulnerableUntil;
@@ -51,8 +53,10 @@ public class PlayerHealth : MonoBehaviour
         // the original color and opacity are restored.
         if (Time.time < invulnerableUntil)
         {
-            bool dimmed = Mathf.FloorToInt(Time.time * 12f) % 2 == 0;
-            color.a = dimmed ? originalColor.a * 0.3f : originalColor.a;
+            bool dimmed = Mathf.FloorToInt(Time.time * blinkRate) % 2 == 0;
+            color.a = dimmed
+            ? originalColor.a * blinkOpacityMultiplier
+            : originalColor.a;
         }
 
         visual.color = color;

@@ -12,6 +12,8 @@ public class EnemyDeathEffect : MonoBehaviour
     [SerializeField, Min(0f)] private float spinSpeed = 720f;
     [SerializeField, Min(0f)] private float knockbackImpulse = 3f;
 
+    private const float NegativeSpinProbability = 0.5f;
+
     /// <summary>
     /// Starts the death effect using the incoming hit's world-space direction.
     /// Called by Health when the enemy receives lethal damage.
@@ -49,7 +51,7 @@ public class EnemyDeathEffect : MonoBehaviour
 
         // Randomize spin direction and convert degrees per second into an
         // angular impulse using inertia, keeping initial spin speed consistent.
-        float direction = Random.value < 0.5f ? -1f : 1f;
+        float direction = Random.value < NegativeSpinProbability ? -1f : 1f;
         float torqueImpulse =
             direction * spinSpeed * Mathf.Deg2Rad * body.inertia;
 
